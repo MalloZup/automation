@@ -22,7 +22,7 @@ VANILLA=${CAASP_VANILLA:-}
 DISABLE_MELTDOWN_SPECTRE=${CAASP_DISABLE_MELTDOWN_SPECTRE:-}
 PROXY=${CAASP_HTTP_PROXY:-}
 LOCATION=${CAASP_LOCATION:-}
-PARALLELISM=${CAASP_PARALLELISM:-1}
+PARALLELISM=${CAASP_PARALLELISM:-}
 
 CAASP_SALT_DIR=${CAASP_SALT_DIR:-$DIR/../../salt}
 CAASP_MANIFESTS_DIR=${CAASP_MANIFESTS_DIR:-$DIR/../../caasp-container-manifests}
@@ -67,7 +67,6 @@ Usage:
 
   * Common options
 
-    -p|--parallelism            Set terraform parallelism (Default: CAASP_PARALLELISM)
     -P|--proxy                  Set HTTP proxy (Default: CAASP_HTTP_PROXY)
     -L|--location               Set location used for downloads (Default: CAASP_LOCATION or 'default')
 
@@ -156,10 +155,6 @@ while [[ $# > 0 ]] ; do
       ;;
     --disable-meltdown-spectre-fixes)
       DISABLE_MELTDOWN_SPECTRE="true"
-      ;;
-    -p|--parallelism)
-      PARALLELISM="$2"
-      shift
       ;;
     -P|--proxy)
       PROXY="$2"
@@ -263,8 +258,7 @@ EOF
   exit 1
 fi
 
-TF_ARGS="-parallelism=$PARALLELISM \
-         -var img_source_url=$IMAGE \
+TF_ARGS="-var img_source_url=$IMAGE \
          -var master_count=$MASTERS \
          -var worker_count=$WORKERS \
          -var admin_memory=$ADMIN_RAM \
