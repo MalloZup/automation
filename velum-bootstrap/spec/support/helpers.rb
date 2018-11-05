@@ -6,6 +6,21 @@ module Helpers
     yield
     save_screenshot("screenshots/#{Time.now.to_i}_after_#{name}.png", full: true)
   end
+  
+  # run function until it is ok for a timeout time
+  # the callback/function ned to return true or false
+  # otherwise fail
+  def wait_until_true(timeout:)
+    puts ">>> Wait for new-node link to be enabled for max #{timeout} seconds"
+    Timeout.timeout(timeout) do
+      until yield do
+        sleep 1
+      end
+    end
+    rescue Timeout::Error
+      puts "Error: timeout reached before function was successfull"
+      false
+  end
 
   def with_status_ok
     yield

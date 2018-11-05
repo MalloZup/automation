@@ -1,5 +1,6 @@
 require "spec_helper"
 require "yaml"
+require "timeout"
 
 feature "Add a Node" do
   before do
@@ -30,19 +31,15 @@ feature "Add a Node" do
       click_button("accept-all")
     end
 
-    puts ">>> Waiting 120 seconds as a workaround"
-    # ugly workaround for https://bugzilla.suse.com/show_bug.cgi?id=1050450
-    # FIXME: drop it when bug is fixed
-    sleep 120
-    puts "<<< Waiting 120 seconds as a workaround"
-
     # wait for new link to appear
-    puts ">>> Wait for new-node link to be enabled"
+    max_timeout = 240
     with_screenshot(name: :new_node_link_enabled) do
-      expect(page).to have_link(class: "assign-nodes-link", wait: 120)
+      wait_until_true(timeout: max_timeout) do
+	      expect(page).to have_link(class: "assign-nodes-link"
+      end
     end
-    puts "<<< new node link enabled"
 
+    puts "<<< new node link enabled"
     with_status_ok do
       visit "/assign_nodes"
     end
