@@ -1,8 +1,7 @@
-library "kubic-jenkins-library@${env.BRANCH_NAME}"
+def targetBranch = env.getEnvironment().get('CHANGE_TARGET', env.BRANCH_NAME)
+def kubicLib = library("kubic-jenkins-library@${targetBranch}").com.suse.kubic
 
-// This pipeline runs daily end-to-end tests by deploying an ISO on Bare Metal
-
-// Configure the build properties
+// Run a build using the SLE15 based image daily.
 properties([
     buildDiscarder(logRotator(numToKeepStr: '31', daysToKeepStr: '31')),
     disableConcurrentBuilds(),
@@ -14,29 +13,21 @@ properties([
     ])
 ])
 
+def kvmTypeOptions = kubicLib.CaaspKvmTypeOptions.new();
+kvmTypeOptions.vanilla = true
+kvmTypeOptions.disableMeltdownSpectreFixes = false
+kvmTypeOptions.image = "channel://devel_15"
+
 coreKubicProjectPeriodic(
-    // Prefer m1.large workers, fallback to any leap15.0 worker.
-    nodeLabel: 'leap15.0&&m1.large||leap15.0',
-    environmentType: 'bare-metal',
+    environmentTypeOptions: kvmTypeOptions,
     environmentDestroy: env.ENVIRONMENT_DESTROY.toBoolean(),
     masterCount: env.MASTER_COUNT.toInteger(),
-    workerCount: env.WORKER_COUNT.toInteger()
-) {
-    // empty preBootstrapBody
-} {
-    // Run through the upgrade orchestration
-    upgradeEnvironmentStage1(
-        environment: environment,
-        fakeUpdatesAvailable: true
-    )
-
-    upgradeEnvironmentStage2(
-        environment: environment
-    )
-
-    // Run the Core Project Tests again
+    workerCount: env.WORKER_COUNT.toInteger(),
+){}
+{
     coreKubicProjectTests(
         environment: environment,
-        podName: 'default'
+        podName: 'default',
     )
+    return environment
 }

@@ -1,5 +1,7 @@
 library "kubic-jenkins-library@${env.BRANCH_NAME}"
 
+// This pipeline runs as a regular job to download images and upload them into OpenStack
+
 // Configure the build properties
 properties([
     buildDiscarder(logRotator(numToKeepStr: '31', daysToKeepStr: '31')),
@@ -14,7 +16,7 @@ properties([
     ])
 ])
 
-node('leap42.3') {
+node('leap15.0') {
     timeout(240){
         stage('Preparation') {
             cleanWs()

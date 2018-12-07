@@ -1,6 +1,6 @@
-library "kubic-jenkins-library@${env.BRANCH_NAME}"
+def kubicLib = library("kubic-jenkins-library@${env.BRANCH_NAME}").com.suse.kubic
 
-// This pipeline runs daily end-to-end tests by deploying an ISO on Bare Metal
+// This pipeline runs on KVM on dedicated BM hosts
 
 // Configure the build properties
 properties([
@@ -10,33 +10,26 @@ properties([
     parameters([
         string(name: 'MASTER_COUNT', defaultValue: '1', description: 'Number of Master Nodes'),
         string(name: 'WORKER_COUNT', defaultValue: '3', description: 'Number of Worker Nodes'),
-        booleanParam(name: 'ENVIRONMENT_DESTROY', defaultValue: true, description: 'Destroy env once done?')
-    ])
+        booleanParam(name: 'ENVIRONMENT_DESTROY', defaultValue: true, description: 'Destroy env once done?'),
+    ]),
 ])
 
+def kvmTypeOptions = kubicLib.CaaspKvmTypeOptions.new();
+kvmTypeOptions.vanilla = true
+
 coreKubicProjectPeriodic(
-    // Prefer m1.large workers, fallback to any leap15.0 worker.
-    nodeLabel: 'leap15.0&&m1.large||leap15.0',
-    environmentType: 'bare-metal',
+    environmentTypeOptions: kvmTypeOptions,
+    nodeLabel: 'kvm-bm',
     environmentDestroy: env.ENVIRONMENT_DESTROY.toBoolean(),
     masterCount: env.MASTER_COUNT.toInteger(),
     workerCount: env.WORKER_COUNT.toInteger()
 ) {
     // empty preBootstrapBody
 } {
-    // Run through the upgrade orchestration
-    upgradeEnvironmentStage1(
-        environment: environment,
-        fakeUpdatesAvailable: true
-    )
-
-    upgradeEnvironmentStage2(
-        environment: environment
-    )
-
     // Run the Core Project Tests again
     coreKubicProjectTests(
         environment: environment,
         podName: 'default'
     )
+    return environment
 }
