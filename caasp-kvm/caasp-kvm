@@ -44,7 +44,7 @@ ADDITIONAL_VOLUME_SIZE=${CAASP_ADDITIONAL_VOLUME_SIZE:-10}
 EXTRA_REPO=${CAASP_EXTRA_REPO:-}
 
 # the environment file
-ENVIRONMENT=$DIR/environment.json
+CAASP_ENVIRONMENT=$DIR/environment.json
 
 USAGE=$(cat <<USAGE
 Usage:
@@ -372,7 +372,7 @@ build() {
   [ -n "$EXTRA_REPO" ] && $DIR/../misc-tools/inject_repo.sh $EXTRA_REPO
 
   log "Waiting for Velum to start - this may take a while"
-  PYTHONUNBUFFERED=1 "$DIR/../misc-tools/wait-for-velum" --timeout 30 https://$(jq -r '.dashboardExternalHost' "$ENVIRONMENT")
+  PYTHONUNBUFFERED=1 "$DIR/../misc-tools/wait-for-velum" --timeout 30 https://$(jq -r '.dashboardExternalHost' "$CAASP_ENVIRONMENT")
 
   log "CaaS Platform Ready for bootstrap"
 }
@@ -391,14 +391,14 @@ update_deployment() {
   terraform init && terraform apply -auto-approve $TF_ARGS
 
   $DIR/tools/generate-environment
-  $DIR/../misc-tools/generate-ssh-config $ENVIRONMENT
+  $DIR/../misc-tools/generate-ssh-config $CAASP_ENVIRONMENT
 }
 
 destroy() {
   log "Destroying terraform configuration"
   terraform init && \
     terraform destroy -force $TF_ARGS && \
-    rm -f "$ENVIRONMENT"
+    rm -f "$CAASP_ENVIRONMENT"
   # Sometimes terraform destroy leaves the admin VM behind, in shut off state,
   # after a failed startup/build. Temporary workaround.
   virsh undefine admin || true
