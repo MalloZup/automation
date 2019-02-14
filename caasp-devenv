@@ -26,6 +26,7 @@ RUN_TESTINFRA=
 RUN_DESTROY=
 RUN_PLAN=
 
+
 ACTION=
 MASTERS=${CAASP_NUM_MASTERS:-1}
 WORKERS=${CAASP_NUM_WORKERS:-2}
@@ -34,6 +35,7 @@ VANILLA=${CAASP_VANILLA:-}
 DISABLE_MELTDOWN_SPECTRE=${CAASP_DISABLE_MELTDOWN_SPECTRE:-}
 PROXY=${CAASP_HTTP_PROXY:-}
 LOCATION=${CAASP_LOCATION:-}
+LIBVIRT_SNAPSHOT=${CAASP_SNAPSHOT:-}
 OPENRC=${OPENRC:-}
 PARALLELISM=${CAASP_PARALLELISM:-1}
 ENABLE_TILLER=${CAASP_ENABLE_TILLER:-false}
@@ -98,6 +100,12 @@ Usage:
   * Testing a cluster
 
     -T|--testinfra                   Run testinfra tests
+
+  * Libvirt snapshots
+
+   --snapshot create                 Create Libvirt snapshot from existing Libvirt caasp-vms  
+   --snapshot delete                 Delete Libvirt snapshot       
+   --snapshot revert                 Revert existing vms to the Libvirt snapshot
 
   * Common options
 
@@ -168,7 +176,7 @@ in_array() {
     return $_found
 }
 
-OPTS=$(getopt -o Bbdhi:L:m:P:p:T:uw: --long build,bootstrap,destroy,disable-meltdown-spectre-fixes,enable-tiller,extra-repo:,help,location,image:,parallelism:,openrc:,plan,platform:,proxy:,setup,testinfra:,vanilla -n "$0" -- "$@")
+OPTS=$(getopt -o Bbdhi:L:m:P:p:T:uw: --long build,bootstrap,destroy,disable-meltdown-spectre-fixes,enable-tiller,extra-repo:,help,location,image:,parallelism:,snapshot:,openrc:,plan,platform:,proxy:,setup,testinfra:,vanilla -n "$0" -- "$@")
 eval set -- "$OPTS"
 
 # parse options
@@ -258,6 +266,11 @@ while true; do
       ACTION=1
       RUN_SETUP=1
       shift
+      ;;
+    --snapshot)
+      ACTION=1
+      LIBVIRT_SNAPSHOT="$2"
+      shift 2
       ;;
     --vanilla)
       VANILLA="true"
@@ -367,6 +380,11 @@ destroy() {
   (cd "$DIR/$PLATFORM" && ./$PLATFORM --destroy $CAASP_PLATFORM_ARGS)
 }
 
+libvirt_snapshot() {
+  (cd "$DIR/misc-tools/" && ./snapshot-devenv.rb $LIBVIRT_SNAPSHOT)
+}
+
+
 [ -n "$ACTION" ] || usage
 [ -n "$RUN_SETUP" ] && setup
 [ -n "$RUN_PLAN" ] && plan
@@ -375,5 +393,5 @@ destroy() {
 [ -n "$RUN_BOOTSTRAP" ] && bootstrap
 [ -n "$RUN_TESTINFRA" ] && testinfra
 [ -n "$RUN_DESTROY" ] && destroy
-
+[ -n "$LIBVIRT_SNAPSHOT" ] && libvirt_snapshot
 exit 0
