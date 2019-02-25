@@ -122,7 +122,7 @@ if options[:kubic]
 end
 
 if options[:sle15]
-  manifest = YAML.safe_load(YAML.dump(manifest).gsub(/sles12\/(.*):__TAG__/, 'registry.suse.de/devel/casp/3.0/controllernode/images_container_base/sles12/\1:__TAG__'))
+  manifest = YAML.safe_load(YAML.dump(manifest).gsub(/caasp\/v4\/(.*):__TAG__/, 'registry.suse.de/devel/casp/head/containers/sle-12-sp3/container/caasp/v4/\1:__TAG__'))
   image_versions.each do |k, v|
     manifest = YAML.safe_load(YAML.dump(manifest).gsub("#{k}:__TAG__", "#{k}:#{v}"))
   end
